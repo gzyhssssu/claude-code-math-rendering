@@ -12,12 +12,12 @@ test('installation is reversible, idempotent, and preserves cache metadata', t =
   assert.equal(result.changed, 1);
   assert.equal(inspect(f.profile).patched.length, 1);
   assert.deepEqual(fs.readFileSync(path.join(f.directory, 'data_1')), beforeMetadata);
-  assert.equal(fs.existsSync(path.join(f.code, 'abcdef01_0')), false);
+  assert.equal(fs.existsSync(path.join(f.code, f.targetName)), false);
   assert.equal(fs.existsSync(path.join(f.code, 'abcdef02_0')), true);
   assert.equal(install(f.profile, f.state, { assertStopped: f.stopped }).changed, 0);
-  fs.writeFileSync(path.join(f.code, 'abcdef01_0'), simple('_key' + URL, 'new compiled patch'));
+  fs.writeFileSync(path.join(f.code, f.targetName), simple(f.targetKey, 'new compiled patch'));
   assert.equal(restore(f.profile, f.state, { assertStopped: f.stopped }).restored, 1);
-  assert.equal(fs.existsSync(path.join(f.code, 'abcdef01_0')), false);
+  assert.equal(fs.existsSync(path.join(f.code, f.targetName)), false);
   const cache = new Cache(f.profile);
   assert.deepEqual(cache.read(cache.entries()[0].location), f.original);
 });

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { Cache, sha, within, safeFile, isGuardURL, bytecodeFiles } from './cache.js';
+import { Cache, sha, within, safeFile, isAssetURL, bytecodeFiles } from './cache.js';
 import { decode, transform, encodeSameSize } from './patcher.js';
 import { assertStopped as windowsStopped } from './platform.js';
 
@@ -29,8 +29,8 @@ export function inspect(profile) {
     if (entry.error) { skipped.push({ url: entry.url, reason: entry.error }); continue; }
     try {
       const original = cache.read(entry.location);
-      const result = transform(decode(original).toString('utf8'));
-      if (!result.changed) { patched.push({ url: entry.url }); continue; }
+      const result = transform(decode(original).toString('utf8'), entry.kind);
+      if (!result.changed) { patched.push({ url: entry.url, kind: entry.kind }); continue; }
       const replacement = encodeSameSize(result.source, original);
       supported.push({ entry, original, replacement });
     } catch (error) { skipped.push({ url: entry.url, reason: error.message }); }
@@ -38,7 +38,7 @@ export function inspect(profile) {
   return { cache, supported, patched, skipped };
 }
 export function summary(result) {
-  return { profile: result.cache.profile, supported: result.supported.map(item => ({ url: item.entry.url, bytes: item.original.length })), patched: result.patched, skipped: result.skipped };
+  return { profile: result.cache.profile, supported: result.supported.map(item => ({ url: item.entry.url, kind: item.entry.kind, bytes: item.original.length })), patched: result.patched, skipped: result.skipped };
 }
 function moveBytecode(profile, urls, directory, manifest, manifestFile) {
   fs.mkdirSync(directory, { recursive: true });
@@ -127,7 +127,7 @@ export function restore(profile, stateDir, { backupId, assertStopped = windowsSt
     const restored = [], skipped = [], invalidate = new Set();
     assertStopped();
     for (const item of manifest.scripts) {
-      if (!isGuardURL(item.url)) throw new Error('Backup contains an invalid asset URL.');
+      if (!isAssetURL(item.url)) throw new Error('Backup contains an invalid asset URL.');
       const before = fs.readFileSync(safeFile(directory, item.before));
       const after = fs.readFileSync(safeFile(directory, item.after));
       if (sha(before) !== item.beforeHash || sha(after) !== item.afterHash || before.length !== after.length) throw new Error('Backup integrity check failed.');

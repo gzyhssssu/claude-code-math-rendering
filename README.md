@@ -1,18 +1,22 @@
-# Claude Inline Math Unlimited
+# Claude Code 公式渲染 · Claude Code Math Rendering
 
 [简体中文](README.zh-CN.md) · [MIT license](LICENSE)
 
-A reversible local cache patch for the **60-character inline math guard** observed in Claude Desktop's Code view on Windows.
+A reversible local cache patch for **quoted, numeric, Unicode and long formulas** in Claude Desktop's Code view on Windows.
 
 The original workaround was verified in both existing and new conversations on one Windows Store installation of Claude `4.4212.0.0`. This repository turns that workaround into a portable CLI with profile discovery, backups, integrity checks, and tests. The generalized CLI is tested with synthetic cache fixtures; it has not been verified across all Claude releases or installation types.
 
-**Experimental and unofficial.** This does not guarantee support for future front-end builds, all formulas, or other operating systems. It removes two length checks from a recognized guard; other math-detection rules, KaTeX syntax, macro limits, memory, and rendering performance still apply. Very large formulas can slow the app down.
+**Experimental and unofficial.** Compatibility depends on the actual hosted front-end build. Version 0.2 treats complete explicit math delimiters as math intent, removing recognized context/content guesses as well as length limits. KaTeX syntax, macro limits, memory, and rendering performance still apply. Very large formulas can slow the app down.
 
 ## Why this exists
 
 Some valid `$…$` expressions rendered at 60 characters and appeared as raw text at 61. The Code view rendered locally, but loaded its JavaScript from Anthropic's hosted assets. Editing the bundled `ion-dist.asar` therefore did not affect the active page.
 
-This tool identifies compatible cached `ce044ea01-*.js` formula modules, validates the guard's export and length checks, and replaces the `60` and `1024` constants with JavaScript infinity (`1/0`). The two replacements preserve the source byte length. It recompresses the response to exactly the original compressed byte length, using a Zstandard skippable frame when needed. Only the matching body ranges are written; cache entry metadata and HTTP headers are left untouched. Matching compiled JavaScript cache files are moved to the backup directory so Chromium recompiles the changed source.
+The issue also affects quoted `"$\hat\phi$"`, `$2x$`, `$10$`, `$α$`, and some single-character contexts. Independent checks existed in the shared guard, the primary Markdown scanner, and the alternate renderer. Version 0.2 patches all recognized layers and upgrades 0.1 length-only patches. It also fixes the 200-character backslash-inline guard and explicit display/fence content guesses. See the [rendering policy audit](docs/rendering-policy.md) for changed and retained rules.
+
+The tool validates recognized module structures, generates replacements without executing vendor code, and syntax-checks the result using Node's non-executing module parser. It recompresses each response to exactly its original encoded byte length, using a Zstandard skippable frame when needed. Only matching response-body ranges are written; metadata and HTTP headers remain unchanged. Source length is preserved when the replacement is shorter; the encoded response length is always preserved. Matching compiled cache entries are moved to a backup so Chromium recompiles the changed modules.
+
+Complete paired dollar signs now take priority over content guesses. For literal currency, shell variables, or ordinary text containing dollar signs, use `\$` or code spans. Common monetary examples remain literal in regression tests, but currency and math cannot always be distinguished automatically.
 
 It does not execute cached JavaScript, edit conversations, patch executables, change permissions, install certificates, open debugging ports, or connect to a proxy. The patch commands perform no network requests or telemetry. It is not an authentication, subscription, or model-access bypass.
 
@@ -30,8 +34,8 @@ No npm dependencies or administrator privileges are required. `npm install` is u
 Clone or download this repository, then use PowerShell in its directory:
 
 ```powershell
-git clone https://github.com/gzyhssssu/claude-inline-math-unlimited.git
-cd claude-inline-math-unlimited
+git clone https://github.com/gzyhssssu/claude-code-math-rendering.git
+cd claude-code-math-rendering
 node bin/cli.js doctor
 ```
 
@@ -63,6 +67,8 @@ State and backups default to:
 ```
 
 The repository stays separate from local state. Backups contain the target vendor scripts and their compiled cache entries; keep them private and do not commit them. No chat records, cookies, or account tokens are intentionally exported.
+
+The legacy state-directory name is retained after the project rename so existing 0.1 backups remain discoverable. Each restore returns to the bytes before that installation; restoring a 0.2 upgrade can therefore return to an earlier length-only patch.
 
 With Claude fully closed:
 
@@ -100,7 +106,7 @@ This launcher also requires Claude to be fully closed. If a newly released resou
 npm test
 ```
 
-Tests create synthetic cache profiles in the OS temporary directory. They cover source transformation, decompression bounds, exact-length recompression, cache allocation checks, compiled-cache key matching, idempotent install, rollback, moved cache entries, failed writes, and tampered backups. Tests do not open a real profile or contact Claude or GitHub.
+Tests create synthetic cache profiles in the OS temporary directory. They cover formula/context policy, both scanner paths, generated-module syntax, decompression bounds, exact-length recompression, allocation checks, compiled-cache keys, idempotence, rollback, relocated entries, failed writes, and tampered backups. They do not open a real profile or contact Claude or GitHub. A separate private investigation tested the installed parser and KaTeX using the reported examples; extracted vendor code is not shipped as test data.
 
 No Claude application source, extracted scripts, binaries, real cache fixtures, or conversation screenshots are distributed here. The MIT license covers this tool's code, not third-party application resources modified locally at runtime.
 

@@ -2,14 +2,14 @@
 import { resolveProfile, defaultStateDir } from '../src/platform.js';
 import { inspect, summary, install, restore } from '../src/service.js';
 
-const help = `claude-inline-math-unlimited (Windows; Node.js 24+)
+const help = `Claude Code Math Rendering / Claude Code 公式渲染 (Windows; Node.js 24+)
 
   node bin/cli.js doctor [--profile PATH]
   node bin/cli.js install [--profile PATH] [--state-dir PATH]
   node bin/cli.js restore [--profile PATH] [--state-dir PATH] [--backup ID]
 
 Quit Claude Desktop from its tray before install or restore.
-doctor only reads cached script resources. Nothing is downloaded or uploaded.
+doctor only reads recognized cached rendering modules. Nothing is downloaded or uploaded.
 Backups stay in the local state directory, outside this checkout.
 `;
 function main(args) {

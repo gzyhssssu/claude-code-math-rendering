@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import zlib from 'node:zlib';
+import crypto from 'node:crypto';
 
 export const URL = 'https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/ce044ea01-TEST.js';
 export const SOURCE = 'var c=60,l=1024;function S(e,t,n,r){return n-t>r?null:e.slice(t,n)}function R(e,t,n,r){if(r-n>l)return!1;let o=S(e,n,r,c);return o!==null&&o.length>0}var Q={inlineGuard:R};export{Q as n};';
@@ -39,8 +40,10 @@ export function fixture(t) {
   original.copy(bodies, 8192);
   fs.writeFileSync(path.join(directory, 'data_1'), entries);
   fs.writeFileSync(path.join(directory, 'data_2'), bodies);
-  fs.writeFileSync(path.join(code, 'abcdef01_0'), simple('_key' + URL + ' \nhttps://claude.ai/', 'compiled guard'));
+  const targetKey = '_key' + URL + ' \nhttps://claude.ai/';
+  const targetName = crypto.createHash('sha1').update(targetKey).digest().readBigUInt64LE(0).toString(16).padStart(16, '0') + '_0';
+  fs.writeFileSync(path.join(code, targetName), simple(targetKey, 'compiled guard'));
   fs.writeFileSync(path.join(code, 'abcdef02_0'), simple('_keyhttps://example.invalid/other.js', URL));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  return { root, profile, directory, code, state, original, offset, entries, stopped: () => {} };
+  return { root, profile, directory, code, targetName, targetKey, state, original, offset, entries, stopped: () => {} };
 }

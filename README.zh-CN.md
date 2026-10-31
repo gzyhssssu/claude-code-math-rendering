@@ -1,18 +1,22 @@
-# Claude Inline Math Unlimited
+# Claude Code 公式渲染 · Claude Code Math Rendering
 
 [English](README.md) · [MIT 许可证](LICENSE)
 
-为 Windows Claude Desktop 的 Code 页提供可回滚的本地缓存补丁，移除已观察到的 **60 字符行内公式识别限制**。
+为 Windows Claude Desktop 的 Code 页提供可回滚的本地缓存补丁，修复**引号内公式、纯数字、希腊单字符、连写变量及长公式**的识别问题。
 
 原始修复已在一台安装 Windows 商店版 Claude `4.4212.0.0` 的电脑上验证：旧会话与新会话中的长公式都恢复了显示。本项目将该方法整理成自动定位、备份、校验和回滚工具。通用版 CLI 已通过自行构造的缓存样例测试，尚未覆盖所有版本和安装方式。
 
-**实验性、非官方工具。** 仅处理可识别的公式模块，不保证未来版本、其他操作系统或所有公式都能使用。它移除两个长度判断，其他公式识别规则、KaTeX 语法、宏展开限制以及内存和性能限制仍然存在；极长公式可能拖慢应用。
+**实验性、非官方工具。** 兼容性依赖实际线上前端版本。0.2 版将完整的显式公式定界符视为数学意图，移除可识别的上下文、内容猜测及长度过滤；KaTeX 语法、宏展开限制以及内存和性能限制保留，极长公式可能拖慢应用。
 
 ## 原理
 
 部分合法 `$…$` 公式在 60 字符时显示正常，达到 61 字符后显示为原始文本。虽然页面在客户端渲染，但 JavaScript 来自 Anthropic 的线上资源服务器，因此只修改安装包中的 `ion-dist.asar` 不会影响当前页面。
 
-本工具只识别缓存中兼容的 `ce044ea01-*.js` 公式模块，核对导出结构、长度判断和字符计数调用后，把 `60` 和 `1024` 两个常量改成 JavaScript 无穷大 `1/0`。修改前后的源码字节数不变；重新压缩后的响应字节数也保持不变，必要时补入 Zstandard 可跳过帧。只写入目标响应体，不改缓存条目元数据和 HTTP 头，并把对应的 JavaScript 编译缓存移动到备份目录，让 Chromium 重新编译。
+0.2 版进一步处理 `"$\hat\phi$"`、`$2x$`、`$10$`、`$α$` 等情况：公共过滤器、主 Markdown 扫描器和备用渲染器原先各有独立过滤，现一并修复。也处理 `\(...\)` 的 200 字符上限及显式行间公式／数学围栏的内容猜测。旧版长度补丁可直接升级，详细规则见[公式渲染逻辑检查](docs/rendering-policy.md)。
+
+工具只修改已识别结构，通过 Node 的语法检查解析生成模块，不执行缓存代码。重新压缩后的响应字节数始终与原响应相同，必要时补入 Zstandard 可跳过帧。替换源码更短时保留原源码长度；强制不变的是缓存中的编码响应长度。只写入目标响应体，不改元数据和 HTTP 头，并备份、移开对应的编译缓存，让 Chromium 重新编译。
+
+完整成对美元符号现在优先表示公式。字面金额、Shell 变量或普通文本请使用 `\$` 转义或行内代码；虽然常见金额样例仍保持文本，但金额与公式的歧义不能完全自动消除。
 
 不执行缓存脚本，不修改聊天、安装包、系统权限、证书或调试设置，不使用代理。补丁命令不发网络请求、不上传诊断、不收集遥测，也不绕过登录、订阅或模型访问限制。
 
@@ -23,8 +27,8 @@
 先正常打开 Claude 的 Code 会话，让包含公式的消息显示一次，以便相关脚本进入缓存。
 
 ```powershell
-git clone https://github.com/gzyhssssu/claude-inline-math-unlimited.git
-cd claude-inline-math-unlimited
+git clone https://github.com/gzyhssssu/claude-code-math-rendering.git
+cd claude-code-math-rendering
 node bin/cli.js doctor
 ```
 
@@ -49,6 +53,8 @@ node bin/cli.js doctor --profile "$env:LOCALAPPDATA\Claude-Data\claude_PACKAGEFA
 ## 备份与回滚
 
 默认状态目录：`%LOCALAPPDATA%\claude-inline-math-unlimited\`，与项目源码分开。备份包含本机目标脚本及其编译缓存，请保留在本机，不要提交到 GitHub；工具不会主动导出聊天记录、Cookie 或账号令牌。
+
+更名后保留旧状态目录名，兼容 0.1 版备份。回滚恢复的是本次安装前的状态，因此回滚 0.2 升级可能回到旧的“仅移除长度限制”补丁。
 
 完全退出 Claude 后执行：
 
@@ -82,7 +88,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Launch-Claude.ps1
 npm test
 ```
 
-测试只在系统临时目录构造虚拟缓存，不打开真实配置，不连接 Claude 或 GitHub。覆盖长度变换、解压上限、等长压缩、块分配校验、编译缓存精确匹配、重复安装、回滚、条目移动、写入故障和备份篡改。
+公开测试只在临时目录构造虚拟缓存，不打开真实配置、不连接 Claude 或 GitHub，覆盖公式上下文、两条扫描链路、生成模块语法、等长压缩、块分配、编译缓存匹配、重复安装、回滚、条目移动、写入故障和备份篡改。本机另对实际解析器和 KaTeX 做了私下验证；第三方脚本不作为公开测试数据分发。
 
 项目不分发 Claude 原始代码、提取脚本、二进制文件、真实缓存样例或聊天截图。MIT 许可证仅覆盖本工具自身；本机被修改的第三方资源不因此改变许可证。
 

@@ -2,13 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import zlib from 'node:zlib';
-import { transform, encodeSameSize, decode } from '../src/patcher.js';
+import { transform, encodeSameSize, decode, MAX_SOURCE_BYTES } from '../src/patcher.js';
 import { SOURCE, compressed } from './fixture.js';
 
-test('removes both length checks while preserving source bytes and normal rejection', () => {
+test('replaces length heuristics while preserving empty-content rejection', () => {
   const result = transform(SOURCE);
   assert.equal(result.changed, true);
-  assert.equal(Buffer.byteLength(result.source), Buffer.byteLength(SOURCE));
   const evaluate = source => vm.runInNewContext(source.replace(/export\{[^}]+\};/, '') + ';Q.inlineGuard');
   const original = evaluate(SOURCE), patched = evaluate(result.source);
   for (const n of [60, 61, 1024, 1025, 10000]) {
@@ -29,6 +28,9 @@ test('never executes cached code', () => {
   assert.equal(transform(source).changed, true);
   assert.equal(globalThis.secret, undefined);
 });
+test('syntax errors in the transformed module prevent installation', () => {
+  assert.throws(() => transform(SOURCE + 'unclosed('), /syntax validation/);
+});
 test('recompression preserves length including a skippable frame', () => {
   const original = compressed();
   const source = transform(SOURCE).source;
@@ -43,6 +45,6 @@ test('rejects impossible sizes and unexpected compression', () => {
   assert.throws(() => decode(Buffer.from('bad')));
 });
 test('bounds decompression and source lengths', () => {
-  assert.throws(() => decode(zlib.zstdCompressSync(Buffer.alloc(100000, 65))));
-  assert.throws(() => transform(' '.repeat(100000)));
+  assert.throws(() => decode(zlib.zstdCompressSync(Buffer.alloc(MAX_SOURCE_BYTES + 1, 65))));
+  assert.throws(() => transform(' '.repeat(MAX_SOURCE_BYTES + 1)));
 });

@@ -37,7 +37,7 @@ test('refuses a stale entry or changed body instead of overwriting', t => {
 });
 test('matches the compiled cache key, not an import string in bytecode', t => {
   const f = fixture(t);
-  assert.deepEqual(bytecodeFiles(f.profile, new Set([URL])).map(item => item.name), ['abcdef01_0']);
+  assert.deepEqual(bytecodeFiles(f.profile, new Set([URL])).map(item => item.name), [f.targetName]);
 });
 test('asset URL restriction excludes lookalike hosts, query strings, and other assets', () => {
   assert.equal(isGuardURL(URL), true);
