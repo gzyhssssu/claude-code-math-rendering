@@ -1,0 +1,16 @@
+node_modules/
+coverage/
+.state/
+backups/
+*.log
+*.asar
+*.zst
+*.compressed
+*.lnk
+*.bak
+*.tmp
+*.env
+cache-install-result.json
+runtime-state.json
+remote-cache-evidence/
+installer-test-*/

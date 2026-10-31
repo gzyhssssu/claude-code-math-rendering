@@ -1,0 +1,24 @@
+name: Bug or compatibility report
+description: Report a reproducible failure without uploading private cache data.
+body:
+  - type: markdown
+    attributes:
+      value: Do not attach cache files, backup manifests, extracted vendor code, credentials, or conversation screenshots. Redact local usernames and paths.
+  - type: input
+    id: versions
+    attributes:
+      label: Windows, Node.js, and Claude versions
+      description: Include whether Claude came from the Windows Store.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps, expected result, and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostic
+    attributes:
+      label: Sanitized diagnostic or error
+      description: Include only the relevant error; remove profile paths and personal information.

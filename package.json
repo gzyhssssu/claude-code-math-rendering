@@ -1,0 +1,13 @@
+{
+  "name": "claude-inline-math-unlimited",
+  "version": "0.1.0",
+  "description": "Reversible local cache patch for the 60-character inline math guard in Claude Desktop for Windows.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": { "node": ">=24.0.0" },
+  "bin": { "claude-math": "bin/cli.js" },
+  "scripts": { "test": "node --test test/patcher.test.js test/cache.test.js test/service.test.js test/platform.test.js", "doctor": "node bin/cli.js doctor", "check": "node --check bin/cli.js && npm test" },
+  "repository": { "type": "git", "url": "https://github.com/gzyhssssu/claude-inline-math-unlimited.git" },
+  "files": ["bin/", "src/", "README.md", "README.zh-CN.md", "LICENSE"]
+}
