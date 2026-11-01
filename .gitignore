@@ -14,3 +14,12 @@ cache-install-result.json
 runtime-state.json
 remote-cache-evidence/
 installer-test-*/
+__pycache__/
+*.pyc
+*.before
+*.after
+*.exe
+*.dll
+*.jsc
+*.jsonl
+native-state/

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0
+
+- Add optional native startup mode: keep the original Claude application entry and transform recognized formula scripts as they load after app restarts.
+- Add `native-prepare` and a Windows installer/check/restore script with local backups, version/hash checks, exclusive target handles, journaling and recovery after write errors.
+- Preserve Electron's ASAR integrity fuse while updating the archive-hash record; explicitly document that modifying the executable invalidates its original Authenticode signature.
+- Keep cache mode available without administrator access or executable modifications; clarify why newly deployed hosted assets can defeat a cache-only fix on the next launch.
+- Restrict in-process interception to known formula assets on the exact asset origin; preserve unrelated responses, remove stale encoding/length headers on replacements, and continue original responses after errors.
+- Add native packaging/worker tests, CDP empty-session regression coverage, scoped startup checks, and synthetic Windows install/rollback/failure tests.
+- Manually verify a full normal quit/restart through the original Windows Store app entry on Claude 4.4212.0.0. Both starts patched all three rendering-module types. Isolated probes passed quoted, long, single-character and numeric cases across restarts; a full copy restored its valid executable signature on rollback. No vendor files or private diagnostics are distributed.
+
 ## 0.2.0
 
 - Renamed the project to **Claude Code 公式渲染 / Claude Code Math Rendering**.

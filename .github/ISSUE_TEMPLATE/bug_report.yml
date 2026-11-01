@@ -7,8 +7,8 @@ body:
   - type: input
     id: versions
     attributes:
-      label: Windows, Node.js, and Claude versions
-      description: Include whether Claude came from the Windows Store.
+      label: Mode, Windows, Node.js, Python (native mode), and Claude versions
+      description: Say cache or native mode, and whether Claude came from the Windows Store. Do not upload native packages or backups.
     validations:
       required: true
   - type: textarea

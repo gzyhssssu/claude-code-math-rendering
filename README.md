@@ -2,7 +2,9 @@
 
 [简体中文](README.zh-CN.md) · [MIT license](LICENSE)
 
-A reversible local cache patch for **quoted, numeric, Unicode and long formulas** in Claude Desktop's Code view on Windows.
+Reversible Windows fixes for **quoted, numeric, Unicode and long formulas** in Claude Desktop's Code view.
+
+Version **0.3** adds an optional [native startup mode](docs/native-runtime.md) that keeps the original app entry and reapplies supported formula fixes at load time, including after ordinary restarts. It modifies the startup archive and EXE integrity record, invalidating the original executable signature. The cache mode below preserves the executable and remains available without administrator access.
 
 The original workaround was verified in both existing and new conversations on one Windows Store installation of Claude `4.4212.0.0`. This repository turns that workaround into a portable CLI with profile discovery, backups, integrity checks, and tests. The generalized CLI is tested with synthetic cache fixtures; it has not been verified across all Claude releases or installation types.
 
@@ -18,9 +20,9 @@ The tool validates recognized module structures, generates replacements without 
 
 Complete paired dollar signs now take priority over content guesses. For literal currency, shell variables, or ordinary text containing dollar signs, use `\$` or code spans. Common monetary examples remain literal in regression tests, but currency and math cannot always be distinguished automatically.
 
-It does not execute cached JavaScript, edit conversations, patch executables, change permissions, install certificates, open debugging ports, or connect to a proxy. The patch commands perform no network requests or telemetry. It is not an authentication, subscription, or model-access bypass.
+The cache mode does not execute cached JavaScript or patch executables. Native mode's file and signature changes are documented separately. Neither mode edits conversations, changes ACLs/ownership, installs certificates, opens external debugging ports, or connects to a proxy. The patch commands perform no network requests or telemetry. This is not an authentication, subscription, or model-access bypass.
 
-## Requirements
+## Cache mode requirements
 
 - Windows; the Windows Store profile layout was verified. Other Windows layouts can be selected explicitly if they use the same Chromium blockfile cache format.
 - [Node.js 24 or newer](https://nodejs.org/en/download), with native Zstandard support.
@@ -88,7 +90,9 @@ An interrupted process may leave `operation.lock` in the state directory. Ensure
 
 ## Updates and durability
 
-The patch can survive ordinary app and computer restarts while the same cached resource remains in use. A hosted front-end release can change the JavaScript URL **without a desktop app update**. Cache cleanup, repair, reinstall, or a new response from the server can also remove the patch.
+The cache patch only affects resources already present. A newly loaded hosted front end can use a new JavaScript URL on the next launch **without a desktop app update**. Cache cleanup, repair, reinstall, or a refetched response can also remove its effect. It cannot guarantee persistence across restarts.
+
+For automatic load-time application through the original entry point, see [native startup mode](docs/native-runtime.md). It was verified across normal exits/restarts on Claude 4.4212.0.0; desktop updates can still replace its hook, and unfamiliar hosted code still requires a compatibility update.
 
 When it stops working, close Claude and run `doctor` and `install` again. The tool can adapt to renamed variables and new resource hashes **only while the supported code structure and cache encoding still match**. It refuses unfamiliar structures or replacements that cannot preserve the compressed response length. Updating the tool may then be necessary. It does not run a background monitor or guarantee automatic maintenance.
 
@@ -106,7 +110,7 @@ This launcher also requires Claude to be fully closed. If a newly released resou
 npm test
 ```
 
-Tests create synthetic cache profiles in the OS temporary directory. They cover formula/context policy, both scanner paths, generated-module syntax, decompression bounds, exact-length recompression, allocation checks, compiled-cache keys, idempotence, rollback, relocated entries, failed writes, and tampered backups. They do not open a real profile or contact Claude or GitHub. A separate private investigation tested the installed parser and KaTeX using the reported examples; extracted vendor code is not shipped as test data.
+Tests create synthetic fixtures in the OS temporary directory. They cover cache and native packaging, response interception, the isolated transformation worker, formula/context policy, both scanner paths, generated-module syntax, decompression bounds, exact-length recompression, allocation checks, compiled-cache keys, idempotence, rollback, relocated entries, failed writes, and tampered backups. They do not open a real profile or contact Claude or GitHub. Native Windows file transactions are also tested in CI with `python -m unittest discover -s test -p test_native_install.py -v` (skipped on other platforms). A separate private investigation tested real parser/KaTeX behavior and the live client; extracted vendor code is not shipped as test data.
 
 No Claude application source, extracted scripts, binaries, real cache fixtures, or conversation screenshots are distributed here. The MIT license covers this tool's code, not third-party application resources modified locally at runtime.
 

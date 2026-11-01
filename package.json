@@ -1,13 +1,13 @@
 {
   "name": "claude-code-math-rendering",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Claude Code 公式渲染: reversible Windows fixes for quoted, numeric, Unicode and long formulas.",
   "type": "module",
   "private": true,
   "license": "MIT",
   "engines": { "node": ">=24.0.0" },
   "bin": { "claude-math": "bin/cli.js" },
-  "scripts": { "test": "node --test test/patcher.test.js test/cache.test.js test/service.test.js test/platform.test.js test/formulas.test.js", "doctor": "node bin/cli.js doctor", "check": "node --check bin/cli.js && npm test" },
+  "scripts": { "test": "node --test test/patcher.test.js test/cache.test.js test/service.test.js test/platform.test.js test/formulas.test.js test/runtime.test.js", "doctor": "node bin/cli.js doctor", "check": "node --check bin/cli.js && npm test" },
   "repository": { "type": "git", "url": "https://github.com/gzyhssssu/claude-code-math-rendering.git" },
-  "files": ["bin/", "src/", "README.md", "README.zh-CN.md", "LICENSE"]
+  "files": ["bin/", "src/", "scripts/", "docs/", "README.md", "README.zh-CN.md", "LICENSE"]
 }

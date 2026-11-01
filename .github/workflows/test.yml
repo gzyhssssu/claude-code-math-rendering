@@ -18,3 +18,7 @@ jobs:
           node-version: '24'
       - run: node bin/cli.js --help
       - run: npm test
+      - name: Parse native installer scripts
+        run: python -c "import ast,pathlib; [ast.parse(p.read_text(encoding='utf-8')) for p in pathlib.Path('scripts').glob('*.py')]"
+      - name: Test native file transactions (Windows only; skipped elsewhere)
+        run: python -m unittest discover -s test -p test_native_install.py -v
